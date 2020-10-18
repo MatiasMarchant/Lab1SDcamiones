@@ -16,7 +16,7 @@ import (
 	"github.com/MatiasMarchant/Prueba1/tree/master/chat"
 )
 
-//RegistroCamion es
+//RegistroCamion es la EDD para llevar registro de los paquetes del camión
 type RegistroCamion struct {
 	idpaquete    string
 	tipo         string
@@ -27,12 +27,10 @@ type RegistroCamion struct {
 	fechaentrega time.Time
 }
 
-//escribirRegistro es
+//escribirRegistro escribe en un .csv el historial de los paquetes del camión
 func escribirRegistro(ListaRegistroCamion []RegistroCamion, idpaquete string, writer *csv.Writer) {
-	//fmt.Println("Entre a escribirRegistro")
-	for _, elem := range ListaRegistroCamion {
+}	for _, elem := range ListaRegistroCamion {
 		if elem.idpaquete == idpaquete {
-			//fmt.Println("Encontre el paquete igual")
 			aescribir := []string{
 				elem.idpaquete,
 				elem.tipo,
@@ -42,15 +40,13 @@ func escribirRegistro(ListaRegistroCamion []RegistroCamion, idpaquete string, wr
 				elem.intentos,
 				time.Now().String(),
 			}
-			//fmt.Println("aescribir:", aescribir)
-			//fmt.Println("Antes de writer.Write")
 			writer.Write(aescribir)
 			writer.Flush()
-			//fmt.Println("Despues de writer.Write")
 		}
 	}
 }
 
+//preguntasinicialescamion es la función que se encarga de pedir input al usuario sobre cuánto tiempo espera el camión por un 2do paquete y cuánto demora en enviarlos
 func preguntasinicialescamion() (string, string) {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Println("Preguntas iniciales")
@@ -63,9 +59,9 @@ func preguntasinicialescamion() (string, string) {
 	return string(tiempoespera), string(tiempodemora)
 }
 
-//Entregarpaquete es
+//Entregarpaquete es la función que ambos camiones de retail llaman para hacer la entrega de un paquete específico. En esta función se manejan las restricciones de reintentos
+// y se hacen RPC's a logistica
 func Entregarpaquete(paquete *chat.ColaPaquete, ListaRegistroCamion []RegistroCamion, c chat.ChatServiceClient, idcamion string, intentos string, tiempodemoraint int) chat.ColaPaquete {
-	//fmt.Println(paquete)
 	paquete.Estado = "En camino"
 	time.Sleep(time.Second * time.Duration(int64(tiempodemoraint)))
 	exito := rand.Float64()
@@ -126,26 +122,6 @@ func Entregarpaquete(paquete *chat.ColaPaquete, ListaRegistroCamion []RegistroCa
 					*paquete = Entregarpaquete(paquete, ListaRegistroCamion, c, idcamion, paquete.Intentos, tiempodemoraint)
 				}
 			} // Si no se debe reintentar, no entra al if y cae mas abajo
-			/*
-				case "normal":
-					//
-					contintentos, _ := strconv.Atoi(paquete.Intentos)
-
-					if contintentos < 2 {
-						// Se debe calcular si esq se debe reintentar
-						valorint, _ := strconv.Atoi(paquete.Valor)
-						costo := 10 * contintentos
-						if costo < valorint {
-							// Se reintenta (se duerme y se aumenta intentos)
-							time.Sleep(time.Second * time.Duration(int64(tiempodemoraint)))
-							contintentos++
-							strcontintentosmasuno := strconv.Itoa(contintentos)
-							paquete.Intentos = strcontintentosmasuno
-							// Re enviar
-							*paquete = Entregarpaquete(paquete, ListaRegistroCamion, c, idcamion, paquete.Intentos, tiempodemoraint)
-						}
-					}
-			*/
 		}
 
 		// Si llega acá quiere decir que no se pudo enviar -> "No Recibido"
@@ -185,9 +161,9 @@ func Entregarpaquete(paquete *chat.ColaPaquete, ListaRegistroCamion []RegistroCa
 	return retPaquete
 }
 
-//Entregarpaquetenormal es
+//Entregarpaquetenormal es la función que el camión normal llama para hacer la entrega de un paquete específico. En esta función se manejan las restricciones de reintentos
+// y se hacen RPC's a logistica
 func Entregarpaquetenormal(paquete *chat.ColaPaquete, ListaRegistroCamion []RegistroCamion, c chat.ChatServiceClient, idcamion string, intentos string, tiempodemoraint int) chat.ColaPaquete {
-	//fmt.Println(paquete)
 	paquete.Estado = "En camino"
 	time.Sleep(time.Second * time.Duration(int64(tiempodemoraint)))
 	exito := rand.Float64()
@@ -218,20 +194,6 @@ func Entregarpaquetenormal(paquete *chat.ColaPaquete, ListaRegistroCamion []Regi
 	} else {
 		// No se entrega paquete - depende de tipo ver q se hace
 		switch paquete.Tipo {
-		/* ESTO ES PARA CAMION RETAIL DESPUES
-		case "retail":
-			//
-			contintentos, _ := strconv.Atoi(paquete.Intentos)
-			if contintentos < 3 {
-				// Dormir, subir intento
-				time.Sleep(time.Second * time.Duration(int64(tiempodemoraint)))
-				contintentos++
-				strcontintentosmasuno := strconv.Itoa(contintentos)
-				paquete.Intentos = strcontintentosmasuno
-				// Re enviar
-				*paquete = Entregarpaquete(paquete, ListaRegistroCamion, c, idcamion, paquete.Intentos, tiempodemoraint)
-			}
-		*/
 		case "prioritario":
 			//
 			contintentos, _ := strconv.Atoi(paquete.Intentos)
@@ -298,7 +260,7 @@ func Entregarpaquetenormal(paquete *chat.ColaPaquete, ListaRegistroCamion []Regi
 }
 
 // ---------------------------------------- CAMION RETAIL2 ------------------------------------------------------------------
-//camionretail2 es
+//camionretail2 es la función que corre el 2do camión de retail, acá se genera el archivo .csv donde se guardará su registro.
 func camionretail2(tiempoespera string, tiempodemora string) {
 	csvfile, erres := os.Create("registroretail2.csv")
 	if erres != nil {
@@ -325,19 +287,17 @@ func camionretail2(tiempoespera string, tiempodemora string) {
 	var conn *grpc.ClientConn
 	conn, err := grpc.Dial("dist37:9000", grpc.WithInsecure())
 	if err != nil {
-		log.Fatalf("No me pude conectar al puerto 9001: %s", err)
+		log.Fatalf("No me pude conectar al puerto 9000: %s", err)
 	}
 	defer conn.Close()
 
 	c := chat.NewChatServiceClient(conn)
 
-	// time.Sleep(time.Second * time.Duration(int64(tiempoesperaint)))
 	idcamion := chat.IdCamion{
 		Idcamion: "3",
 	}
 
 	for true {
-		// ACA VOY
 		paquete, _ := c.EntregarPaqueteCamionRetail(context.Background(), &idcamion)
 		if paquete.Idpaquete == "NoPaquetes" { // Si no encuentra paquetes, dormir
 			time.Sleep(time.Second * time.Duration(int64(tiempoesperaint)))
@@ -411,8 +371,6 @@ func camionretail2(tiempoespera string, tiempodemora string) {
 					escribirRegistro(ListaRegistroCamion, paquete.Idpaquete, csvwriter)
 
 				}
-
-				//os.Exit(0)
 			}
 		}
 
@@ -421,7 +379,7 @@ func camionretail2(tiempoespera string, tiempodemora string) {
 }
 
 // ---------------------------------------- CAMION RETAIL1 ------------------------------------------------------------------
-//camionretail1 es
+//camionretail1 es la función que corre el 1er camión de retail, acá se genera el archivo .csv donde se guardará su registro.
 func camionretail1(tiempoespera string, tiempodemora string) {
 	csvfile, erres := os.Create("registroretail1.csv")
 	if erres != nil {
@@ -454,13 +412,11 @@ func camionretail1(tiempoespera string, tiempodemora string) {
 
 	c := chat.NewChatServiceClient(conn)
 
-	// time.Sleep(time.Second * time.Duration(int64(tiempoesperaint)))
 	idcamion := chat.IdCamion{
 		Idcamion: "2",
 	}
 
 	for true {
-		// ACA VOY
 		paquete, _ := c.EntregarPaqueteCamionRetail(context.Background(), &idcamion)
 		if paquete.Idpaquete == "NoPaquetes" { // Si no encuentra paquetes, dormir
 			time.Sleep(time.Second * time.Duration(int64(tiempoesperaint)))
@@ -534,8 +490,6 @@ func camionretail1(tiempoespera string, tiempodemora string) {
 					escribirRegistro(ListaRegistroCamion, paquete.Idpaquete, csvwriter)
 
 				}
-
-				//os.Exit(0)
 			}
 		}
 
@@ -544,7 +498,7 @@ func camionretail1(tiempoespera string, tiempodemora string) {
 }
 
 // ---------------------------------------- CAMION NORMAL ------------------------------------------------------------------
-//camionnormal es
+//camionnormal es la función que corre el camión normal, acá se genera el archivo .csv donde se guardará su registro.
 func camionnormal(tiempoespera string, tiempodemora string) {
 	csvfile, erres := os.Create("registrocamionnormal.csv")
 	if erres != nil {
@@ -577,7 +531,6 @@ func camionnormal(tiempoespera string, tiempodemora string) {
 
 	c := chat.NewChatServiceClient(conn)
 
-	// time.Sleep(time.Second * time.Duration(int64(tiempoesperaint)))
 	idcamion := chat.IdCamion{
 		Idcamion: "1",
 	}
@@ -656,8 +609,6 @@ func camionnormal(tiempoespera string, tiempodemora string) {
 					escribirRegistro(ListaRegistroCamion, paquete.Idpaquete, csvwriter)
 
 				}
-
-				//os.Exit(0)
 			}
 		}
 
@@ -665,13 +616,13 @@ func camionnormal(tiempoespera string, tiempodemora string) {
 
 }
 
+//main ejecuta la función preguntasinicialescamion y le entrega el resultado como parametros a cada go func, y se mantiene en un loop for true para que las go func no mueran
 func main() {
 	var tiempoespera, tiempodemora string
 	tiempoespera, tiempodemora = preguntasinicialescamion()
 	go camionnormal(tiempoespera, tiempodemora)
 	go camionretail1(tiempoespera, tiempodemora)
 	go camionretail2(tiempoespera, tiempodemora)
-	// Recordar hacer .csv de registros
 	for true {
 
 	}
