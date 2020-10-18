@@ -29,7 +29,7 @@ type RegistroCamion struct {
 
 //escribirRegistro escribe en un .csv el historial de los paquetes del camión
 func escribirRegistro(ListaRegistroCamion []RegistroCamion, idpaquete string, writer *csv.Writer) {
-}	for _, elem := range ListaRegistroCamion {
+	for _, elem := range ListaRegistroCamion {
 		if elem.idpaquete == idpaquete {
 			aescribir := []string{
 				elem.idpaquete,
