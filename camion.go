@@ -618,6 +618,7 @@ func camionnormal(tiempoespera string, tiempodemora string) {
 
 //main ejecuta la función preguntasinicialescamion y le entrega el resultado como parametros a cada go func, y se mantiene en un loop for true para que las go func no mueran
 func main() {
+	fmt.Println("Corriendo el sistema de camiones...\n")
 	var tiempoespera, tiempodemora string
 	tiempoespera, tiempodemora = preguntasinicialescamion()
 	go camionnormal(tiempoespera, tiempodemora)
